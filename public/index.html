@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIPCall</title>
+  <!-- Google Fonts for Playfair Display (Editorial Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- TOP NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="nav-brand">VIPCall</div>
+      <button id="btn-toggle-admin" class="nav-account-btn" aria-label="Open Admin Panel">
+        <!-- Custom SVG Account Icon -->
+        <svg class="account-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+          <rect width="256" height="256" fill="none"/>
+          <circle cx="128" cy="128" r="96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="" stroke-width="16"/>
+          <circle cx="128" cy="120" r="40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="" stroke-width="16"/>
+          <path d="M63.8,199.37a72,72,0,0,1,128.4,0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- BACKDROP OVERLAY FOR DRAWER -->
+  <div id="drawer-overlay" class="drawer-overlay hidden"></div>
+
+  <div class="app-container">
+    
+    <!-- LEFT PANEL: PRODUCT CATALOG -->
+    <main class="panel-left" id="panel-left-id">
+      <header class="catalog-header">
+        <h1 class="catalog-title">Listings</h1>
+        
+        <!-- Filter Tabs (All, Indian, Russian) -->
+        <div class="filter-tabs">
+          <button class="tab-btn active" data-filter="all">All Items</button>
+          <button class="tab-btn" data-filter="Indian">Indian Origin</button>
+          <button class="tab-btn" data-filter="Russian">Russian Origin</button>
+        </div>
+
+        <div class="search-wrapper">
+          <!-- Custom SVG Search Icon -->
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+            <rect width="256" height="256" fill="none"/>
+            <circle cx="116" cy="116" r="80" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+            <line x1="172.5" y1="172.5" x2="224" y2="224" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+          </svg>
+          <input type="text" id="catalog-search" placeholder="Search catalog..." autocomplete="off">
+        </div>
+      </header>
+
+      <!-- Empty state container -->
+      <div id="empty-state" class="empty-state hidden">
+        <p>No items found in the catalog.</p>
+      </div>
+
+      <!-- Catalog list -->
+      <div id="product-list" class="product-list">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL: ADMIN LOGIN / ACTIONS (SLIDE-OUT DRAWER) -->
+    <aside class="panel-right" id="panel-right-id">
+      <!-- Close drawer button -->
+      <button type="button" id="btn-close-drawer" class="btn-close-drawer" aria-label="Close Panel">
+        <!-- Custom SVG Close Icon -->
+        <svg class="close-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+          <rect width="256" height="256" fill="none"/>
+          <line x1="200" y1="56" x2="56" y2="200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+          <line x1="200" y1="200" x2="56" y2="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+        </svg>
+      </button>
+
+      <!-- Loading state during status check -->
+      <div id="auth-loading" class="auth-loading">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- SECTION 1: ADMIN LOGIN FORM (default state) -->
+      <div id="login-section" class="form-wrapper hidden">
+        <h2 class="form-title">Portal Sign In</h2>
+        <p class="form-subtitle">Enter administrator credentials to manage catalog.</p>
+
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" placeholder="e.g. admin" required>
+            <span class="error-message" id="error-username">Username is required.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" required>
+            <span class="error-message" id="error-password">Password is required.</span>
+          </div>
+
+          <span class="error-message form-error" id="login-api-error">Invalid username or password.</span>
+
+          <button type="submit" class="btn-primary" id="btn-login-submit">
+            Sign In
+          </button>
+        </form>
+      </div>
+
+      <!-- SECTION 2: ADD PRODUCT FORM (visible only when logged in) -->
+      <div id="add-product-section" class="form-wrapper hidden">
+        <div class="admin-panel-header">
+          <div>
+            <h2 class="form-title">Add New</h2>
+            <p class="form-subtitle">Logged in as Administrator</p>
+          </div>
+          <button type="button" id="btn-logout" class="btn-logout-header">
+            Logout
+          </button>
+        </div>
+
+        <form id="product-form" novalidate>
+          <div class="form-group">
+            <label for="product-title">Name</label>
+            <input type="text" id="product-title" placeholder="e.g. Santi Cane Lounge Chair" required>
+            <span class="error-message" id="error-title">Name is required.</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="product-price">Price (INR)</label>
+              <input type="number" id="product-price" placeholder="e.g. 68000" min="0" required>
+              <span class="error-message" id="error-price">Valid price is required.</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="product-category">Filter Category</label>
+              <select id="product-category" required>
+                <option value="" disabled selected>Select category</option>
+                <option value="Indian">Indian</option>
+                <option value="Russian">Russian</option>
+              </select>
+              <span class="error-message" id="error-category">Please select a category.</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="product-whatsapp">WhatsApp Number</label>
+            <input type="text" id="product-whatsapp" placeholder="e.g. 919876543210 (include country code)" required>
+            <span class="error-message" id="error-whatsapp">Valid WhatsApp phone number is required.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="product-description">Description</label>
+            <textarea id="product-description" rows="4" placeholder="Describe the item condition, specs, and details..." required></textarea>
+            <span class="error-message" id="error-description">Description is required.</span>
+          </div>
+
+          <!-- Dual image entry tab/toggle layout -->
+          <div class="form-group">
+            <label>Image</label>
+            <div class="image-toggle-buttons">
+              <button type="button" id="btn-toggle-upload" class="toggle-btn active">Upload File</button>
+              <button type="button" id="btn-toggle-url" class="toggle-btn">Image URL</button>
+            </div>
+
+            <!-- Upload File section -->
+            <div id="image-upload-wrapper" class="image-input-section">
+              <div class="file-dropzone" id="file-dropzone">
+                <input type="file" id="product-image-file" accept="image/*">
+                <!-- Custom SVG Upload Icon -->
+                <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+                  <rect width="256" height="256" fill="none"/>
+                  <polyline points="86 82 128 40 170 82" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+                  <line x1="128" y1="40" x2="128" y2="152" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+                  <path d="M216,152v48a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+                </svg>
+                <span class="dropzone-text" id="dropzone-text">Click to choose image or drag & drop</span>
+              </div>
+              <div id="image-preview-container" class="image-preview-container hidden">
+                <div class="crop-container" id="crop-container">
+                  <img id="image-preview" src="#" alt="Preview" draggable="false">
+                </div>
+                <div class="crop-controls">
+                  <label for="crop-zoom" class="crop-zoom-label">Zoom</label>
+                  <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1">
+                </div>
+                <p class="crop-instruction">Drag image to position • Use slider to zoom</p>
+                <button type="button" id="btn-remove-preview" class="btn-text-only">Remove Image</button>
+              </div>
+            </div>
+
+            <!-- Image URL section -->
+            <div id="image-url-wrapper" class="image-input-section hidden">
+              <input type="url" id="product-image-url" placeholder="e.g. https://images.unsplash.com/photo-..." autocomplete="off">
+            </div>
+            <span class="error-message" id="error-image">Please upload an image or provide a URL.</span>
+          </div>
+
+          <span class="error-message form-error" id="product-api-error">Failed to add item. Please try again.</span>
+
+          <div class="form-actions-row">
+            <button type="submit" class="btn-primary" id="btn-submit">
+              Add to Catalog
+            </button>
+            <button type="button" id="btn-cancel-edit" class="btn-secondary hidden">
+              Cancel Edit
+            </button>
+          </div>
+        </form>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- CUSTOM CONFIRMATION MODAL -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Remove Listing</h3>
+      <p class="modal-text">Are you sure you want to remove this item? This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button type="button" id="btn-confirm-cancel" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-confirm-delete" class="btn-danger">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
