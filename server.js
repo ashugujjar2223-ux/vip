@@ -353,3 +353,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`VIPCall backend running on port ${PORT}`);
 });
+
+module.exports = app;
