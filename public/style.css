@@ -65,6 +65,18 @@ body {
   border-radius: 4px;
 }
 
+.brand-sub.env-preview {
+  color: #b45309;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+}
+
+.brand-sub.env-development {
+  color: #1d4ed8;
+  background-color: #dbeafe;
+  border: 1px solid #bfdbfe;
+}
+
 .nav-account-btn {
   background: none;
   border: none;

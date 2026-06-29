@@ -70,19 +70,75 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// Database connection caching helper for serverless environments
+let cachedDbPromise = null;
+
+async function connectToDatabase() {
+  if (mongoose.connection.readyState >= 1) {
+    return mongoose.connection;
+  }
+
+  if (!cachedDbPromise) {
+    let baseUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vipcall';
+    if (process.env.VERCEL_ENV === 'preview') {
+      try {
+        const url = new URL(baseUri);
+        let dbName = url.pathname.replace(/^\//, '') || 'vipcall';
+        if (!dbName.endsWith('_preview')) {
+          url.pathname = `/${dbName}_preview`;
+        }
+        baseUri = url.toString();
+      } catch (e) {
+        if (baseUri.includes('?')) {
+          const parts = baseUri.split('?');
+          baseUri = `${parts[0]}_preview?${parts[1]}`;
+        } else {
+          baseUri = `${baseUri}_preview`;
+        }
+      }
+    }
+
+    console.log(`Connecting to MongoDB at: ${baseUri.replace(/:([^@]+)@/, ':****@')}`);
+    
+    cachedDbPromise = mongoose.connect(baseUri, {
+      bufferCommands: false, // Disables Mongoose's buffering to prevent hangs
+      maxPoolSize: 10
+    }).then(async (m) => {
+      console.log('Successfully connected to MongoDB.');
+      // Auto-initialize default credentials and listings on fresh databases
+      await initializeAdminUser();
+      await initializeProducts();
+      return m;
+    }).catch(err => {
+      cachedDbPromise = null; // Reset cache on failure
+      throw err;
+    });
+  }
+
+  return cachedDbPromise;
+}
+
+// Middleware to ensure DB connection is active before processing requests
+async function dbMiddleware(req, res, next) {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (err) {
+    console.error('Database connection middleware error:', err);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+}
+
+// Apply dbMiddleware to all API routes
+app.use('/api', dbMiddleware);
+
 // Serve static frontend files from 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vipcall')
-  .then(() => {
-    console.log('Successfully connected to MongoDB.');
-    initializeAdminUser();
-    initializeProducts();
-  })
-  .catch(err => {
-    console.error('Error connecting to MongoDB:', err);
-  });
+// Connect in background on server boot (non-blocking)
+connectToDatabase().catch(err => {
+  console.error('Background database connection failed on boot:', err);
+});
 
 // --- Mongoose Schemas ---
 
@@ -177,6 +233,13 @@ function requireAuth(req, res, next) {
 }
 
 // --- API Endpoints ---
+
+// Expose deployment environment info
+app.get('/api/environment', (req, res) => {
+  res.json({
+    env: process.env.VERCEL_ENV || 'development'
+  });
+});
 
 // Check Authentication Status
 app.get('/api/auth/status', (req, res) => {
