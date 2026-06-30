@@ -105,9 +105,8 @@ async function connectToDatabase() {
       maxPoolSize: 10
     }).then(async (m) => {
       console.log('Successfully connected to MongoDB.');
-      // Auto-initialize default credentials and listings on fresh databases
+      // Auto-initialize default credentials on fresh databases
       await initializeAdminUser();
-      await initializeProducts();
       return m;
     }).catch(err => {
       cachedDbPromise = null; // Reset cache on failure
