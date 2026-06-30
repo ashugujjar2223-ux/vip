@@ -43,7 +43,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vipcall',
+    clientPromise: mongoose.connection.asPromise().then(conn => conn.getClient()),
     ttl: 14 * 24 * 60 * 60, // 14 days
     autoRemove: 'native'
   }),
