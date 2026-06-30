@@ -429,9 +429,9 @@ function filterAndRenderProducts() {
           <h3 class="card-title">${escapeHTML(product.title)}</h3>
         </div>
         <div class="card-meta-row">
-          <span class="card-price">₹${Number(product.price).toLocaleString('en-IN')}</span>
           <span class="card-category" data-cat="${product.category}">${escapeHTML(product.category)}</span>
         </div>
+
         <p class="card-description">${escapeHTML(product.description)}</p>
         <div class="card-footer">
           <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp-inquire">
