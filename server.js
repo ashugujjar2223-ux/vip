@@ -74,7 +74,7 @@ app.use('/api', (req, res, next) => {
 let cachedDbPromise = null;
 
 async function connectToDatabase() {
-  if (mongoose.connection.readyState >= 1) {
+  if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
   }
 
